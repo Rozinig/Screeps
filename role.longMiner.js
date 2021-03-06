@@ -23,7 +23,7 @@ module.exports = {
                 if (!creep.pos.isEqualTo(base.sourceContainers[0].pos)){
                     creep.moveTo(base.sourceContainers[0].pos);
                 }
-                else if (base.sourceContainers[0].hits < base.sourceContainers[0].hitsMax && creep.store.getUsedCapacity > 0){
+                else if (base.sourceContainers[0].hits < base.sourceContainers[0].hitsMax && creep.store.getUsedCapacity() > 0){
                     creep.repair(base.sourceContainers[0]);
                 }
                 else {

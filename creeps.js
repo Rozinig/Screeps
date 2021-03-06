@@ -201,12 +201,12 @@ module.exports = {
                                 spawn.spawnCreep([WORK,WORK,WORK,CARRY,MOVE,MOVE,MOVE,MOVE], newName, 
                                     {memory: {role: 'longMiner',target: pos}}); 
                             }
-                            /*var longHaulers = _.filter(Game.creeps, (creep) => creep.memory.role == 'longHauler' && targetRoom(creep,pos.roomName));
+                            var longHaulers = _.filter(Game.creeps, (creep) => creep.memory.role == 'longHauler' && targetRoom(creep,pos.roomName));
                             if (longHaulers.length < 1 || (creepTicksLeft(longHaulers[0],75 && longMiners.length <2))){
                                 var newName = 'LongHauler' + Game.time;
                                 spawn.spawnCreep([CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE], newName, 
                                     {memory: {role: 'longHauler',target: pos, home: spawn.pos}}); 
-                            }*/
+                            }
                         }
                     }
                 }

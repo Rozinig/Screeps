@@ -20,14 +20,19 @@ module.exports = {
         
         // if not in target room and have resource
         else if (creep.room.name != target.roomName && creep.store.getUsedCapacity() >0){
-            // deliever resource
-            var sourceCon = creep.pos.findClosestByPath(base.sourceContainers);
-            var attempt = creep.transfer(sourceCon, RESOURCE_ENERGY)
-            if (attempt == ERR_NOT_IN_RANGE){
-                creep.moveTo(sourceCon);
+            if (creep.room.name != home.roomName){
+                creep.moveTo(home);
             }
-            else if (attempt ==ERR_FULL){
-                creep.drop(RESOURCE_ENERGY);
+            // deliever resource
+            else{
+                var sourceCon = creep.pos.findClosestByPath(base.sourceContainers);
+                var attempt = creep.transfer(sourceCon, RESOURCE_ENERGY)
+                if (attempt == ERR_NOT_IN_RANGE){
+                    creep.moveTo(sourceCon);
+                }
+                else if (attempt ==ERR_FULL){
+                    creep.drop(RESOURCE_ENERGY);
+                }
             }
             
         }
