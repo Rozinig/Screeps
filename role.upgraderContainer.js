@@ -6,7 +6,7 @@ module.exports = {
             return resource.pos.isNearTo(base.sinkContainers[0]);}});
         creep.pickup(energydrop[0]);
         
-        if (!creep.pos.isNearTo(base.sinkContainers[0])){
+        if (!creep.pos.isNearTo(base.sinkContainers[0]) && creep.store.getUsedCapacity()==0){
             creep.moveTo(base.sinkContainers[0].pos);
         }
         

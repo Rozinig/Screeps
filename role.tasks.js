@@ -3,10 +3,10 @@ var classBase = require('class.base');
 module.exports = {
     // Task to fill creep with energy
     getEnergy: function(creep,base, far){
-        lowFruit(creep);
-        if (base.sourceContainers.length>0){
-            //var energydrop = creep.room.find(FIND_DROPPED_RESOURCES, {filter: (resource) => {
-            //    return resource.pos.isNearTo(base.sources[0]) || resource.pos.isNearTo(base.sources[1]);}});
+        var size =lowFruit(creep);
+        
+            var miners = _.filter(Game.creeps, (creeper) => creeper.memory.role =='miner' && creeper.room.name ==creep.room.name);
+        if (base.sourceContainers.length>0 && miners.length>0){
             if (far){
                 var sourceCon = creep.pos.findClosestByPath(base.sourceContainers);
             }
@@ -19,21 +19,17 @@ module.exports = {
                 }
             }
             
-            /*if (creep.pickup(energydrop[0])==0 || creep.pickup(energydrop[1])==0 ){
-                
-                lowFruit(creep);
-                return;
-            }
-            else*/ if (sourceCon){
-                if (sourceCon.store[RESOURCE_ENERGY]>0 && creep.withdraw(sourceCon, RESOURCE_ENERGY)== ERR_NOT_IN_RANGE){
+            if (sourceCon){
+                if (creep.withdraw(sourceCon, RESOURCE_ENERGY, creep.store.getFreeCapacity()-size)== ERR_NOT_IN_RANGE){
                         creep.moveTo(sourceCon);
-                        return;
                 }
             }
+            
             
             if (creep.pos.isEqualTo(base.sourceContainers[0].pos)){
                 creep.move(TOP);
             }
+            return;
         }
         var sources = creep.pos.findClosestByPath(FIND_SOURCES);
         if(creep.harvest(sources) == ERR_NOT_IN_RANGE) {
@@ -115,7 +111,9 @@ function lowFruit(creep){
         return resource.pos.isNearTo(creep.pos);}});
     if (fruit.length){
         creep.pickup(fruit[0]);
+        return fruit[0].amount;
     }
+    return 0;
     
 }
 function repairList(structure, hitLimit){

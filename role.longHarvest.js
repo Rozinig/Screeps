@@ -17,7 +17,12 @@ module.exports = {
                 creep.moveTo(target,{reusePath:15});
             }
             else {
-                creep.harvest(sources[0], RESOURCE_ENERGY);
+                if (base.buildSites.length && creep.store.getUsedCapacity()>20){
+                    creep.build(base.buildSites[0]);
+                }
+                else {
+                    creep.harvest(sources[0], RESOURCE_ENERGY);
+                }
             }
             return;
         }

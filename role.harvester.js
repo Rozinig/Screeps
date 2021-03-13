@@ -11,7 +11,7 @@ module.exports = {
         }
         
         // If it is not working and doens't have full energy then go get energy
-	    if(creep.store.getFreeCapacity() > 0 && !creep.memory.working) {
+	    if(creep.store.getUsedCapacity() == 0 && !creep.memory.working) {
 	        tasks.getEnergy(creep, base, true);
         }
         

@@ -9,8 +9,13 @@ module.exports = {
                 structure.pos.isNearTo(this.sources[1])|| 
                 structure.pos.isNearTo(this.sources[2])|| 
                 structure.pos.isNearTo(this.sources[3]) );}});
-            this.sinkContainers = room.find(FIND_STRUCTURES, { filter: (structure) => {
-                return (structure.structureType == STRUCTURE_CONTAINER) && structure.pos.inRangeTo(room.controller.pos,3);}});
+            if (room.controller){
+                this.sinkContainers = room.find(FIND_STRUCTURES, { filter: (structure) => {
+                    return (structure.structureType == STRUCTURE_CONTAINER) && structure.pos.inRangeTo(room.controller.pos,3);}});
+            }
+            else {
+                this.sinkContainers=[];
+            }
             this.extensions = room.find(FIND_STRUCTURES, { filter: (structure) => {
                 return (structure.structureType == STRUCTURE_EXTENSION);}});
             this.disSites = room.find(FIND_STRUCTURES, {

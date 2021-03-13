@@ -11,7 +11,12 @@ var roleHauler2 = require('role.hauler2');
 var roleLongHarvest = require('role.longHarvest');
 var roleLongMiner = require('role.longMiner');
 var roleLongHauler = require('role.longHauler');
+var roleLongClaim = require('role.longClaim');
+var roleLongAttackMiner = require('role.longAttackMiner');
+var roleLongHeal = require('role.longHeal');
+var roleLongDefender = require('role.longDefender');
 var roleDisassemble = require('role.disassemble');
+var roleLongDisassemble = require('role.longDisassemble');
 var roleDefenderMelee = require('role.defenderMelee');
 var roleDefenderHeals = require('role.defenderHeals');
 var roleDefenderRanged = require('role.defenderRanged');
@@ -50,9 +55,9 @@ module.exports = {
             var harvesterCount =2;
             var builderCount =2;
             var upgraderCount = 4;
-            var conUpgraderCount =2;
+            var conUpgraderCount =3;
             var haulerCount =3;
-            var hauler2Count = 2;
+            var hauler2Count = 4;
             var disassemblersCount=2;
             var longHarvestersCount=3;
             var longHarvestArray = [WORK,WORK,WORK,WORK,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE];
@@ -63,7 +68,7 @@ module.exports = {
             var upgraders = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader' && creep.room.name ==room.name);
             var builders = _.filter(Game.creeps, (creep) => creep.memory.role == 'builder' && creep.room.name ==room.name);
             var miners = _.filter(Game.creeps, (creep) => creep.memory.role =='miner' && creep.room.name ==room.name);
-            var conUpgraders = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgraderContainer' && creep.room.name ==room.name);
+            var conUpgraders = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgraderContainer' && creep.room.name ==room.name && creep.ticksToLive > 75);
             var haulers = _.filter(Game.creeps, (creep) => creep.memory.role == 'hauler' && creep.room.name ==room.name && creep.memory.far);
             var hauler2s = _.filter(Game.creeps, (creep) => creep.memory.role == 'hauler' && creep.room.name ==room.name && !creep.memory.far);
             var disassemblers = _.filter(Game.creeps, (creep) => creep.memory.role == 'disassemble' && creep.room.name ==room.name);
@@ -83,8 +88,14 @@ module.exports = {
                 //Count and Spawn Harvesters as necessary
                 if((harvesters.length < harvesterCount)) {
                     var newName = 'Harvester' + Game.time;
-                   spawn.spawnCreep([WORK,CARRY,MOVE], newName, 
-                        {memory: {role: 'harvester'}});        
+                    if(room.energyCapacityAvailable>400){
+                        spawn.spawnCreep([WORK,CARRY,CARRY,CARRY,MOVE,MOVE], newName, 
+                            {memory: {role: 'harvester'}});
+                    }
+                    else {
+                        spawn.spawnCreep([WORK,CARRY,MOVE], newName, 
+                            {memory: {role: 'harvester'}});
+                    }
                         harvesterCount--;
                 }
                 
@@ -129,8 +140,7 @@ module.exports = {
                 } 
                 
                 //container upgrader
-                else if((conCap(base.sinkContainers,0,0) && conUpgraders.length < 1) || ( conCap(base.sinkContainers,0,1700) && conUpgraders.length < conUpgraderCount) || 
-                        (base.sinkContainers.length>0 && conUpgraders<2 && creepTicksLeft(conUpgraders[0],200))) {
+                else if((conCap(base.sinkContainers,0,0) && conUpgraders.length < 1) || ( conCap(base.sinkContainers,0,1700) && conUpgraders.length < conUpgraderCount)) {
                     if (room.energyCapacityAvailable>=1200){
                         var newName = 'conUpgrader' + Game.time;
                         spawn.spawnCreep([WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,MOVE,MOVE,MOVE], newName, 
@@ -144,14 +154,6 @@ module.exports = {
                             conUpgraderCount--;
                     }
                 }
-                
-                // Hauler
-                else if (conUpgraders.length > 0 && miners.length > 0 && haulers.length< haulerCount && (haulers.length <1 || conCap(base.sourceContainers, 0, 1500))) {
-                    var newName = 'Hauler' + Game.time;
-                    spawn.spawnCreep([CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE], newName, 
-                        {memory: {role: 'hauler', far: true}});        
-                        haulerCount--;
-                }
                     
                 // Hauler2
                 else if (miners.length > 1 && hauler2s.length< hauler2Count && (haulers.length <1 || conCap(base.sourceContainers, 1, 1500))) {
@@ -159,6 +161,14 @@ module.exports = {
                     spawn.spawnCreep([CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE], newName, 
                         {memory: {role: 'hauler', far: false}});        
                         hauler2Count--;
+                }
+                
+                // Hauler
+                else if ( miners.length > 0 && haulers.length< haulerCount && (haulers.length <1 || conCap(base.sourceContainers, 0, 1700))) {
+                    var newName = 'Hauler' + Game.time;
+                    spawn.spawnCreep([CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE], newName, 
+                        {memory: {role: 'hauler', far: true}});        
+                        haulerCount--;
                 }
                 
                 //Disassemblers
@@ -170,7 +180,7 @@ module.exports = {
                 }*/
                 
                 // Melee Defenders
-                else if (defendersMelee.length <(100+base.hostileBodyParts/20) && base.hostiles.length>0){
+                else if (defendersMelee.length <((base.hostileBodyParts-100)/20) && base.hostiles.length>0){
                     var newName = 'DefenderMelee' + Game.time;
                     spawn.spawnCreep([TOUGH,TOUGH,TOUGH,TOUGH,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE], newName, 
                         {memory: {role: 'defenderMelee'}});        
@@ -181,7 +191,7 @@ module.exports = {
                 else {
                     if(spawn.memory.safeLongHarvestTargets){
                         for ( var pos of spawn.memory.safeLongHarvestTargets){
-                            var longHarvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'longHarvest' && targetRoom(creep,pos.roomName));
+                            var longHarvesters = _.filter(Game.creeps, (creep) => creep.memory.role == 'longHarvest' && targetRoom(creep,pos));
                             if (longHarvesters.length<longHarvestersCount) {
                                 var newName = 'LongHarvest' + Game.time;
                                 spawn.spawnCreep(longHarvestArray, newName, 
@@ -191,21 +201,82 @@ module.exports = {
                     
                     }
                 
-                
                     // Long Miner
                     if(spawn.memory.safeLongMinerTargets){
-                        for ( var pos of spawn.memory.safeLongMinerTargets){
-                            var longMiners = _.filter(Game.creeps, (creep) => creep.memory.role == 'longMiner' && targetRoom(creep,pos.roomName));
-                            if (longMiners.length < 1 || (creepTicksLeft(longMiners[0],75 && longMiners.length < 2))){
-                                var newName = 'LongMiner' + Game.time;
-                                spawn.spawnCreep([WORK,WORK,WORK,CARRY,MOVE,MOVE,MOVE,MOVE], newName, 
-                                    {memory: {role: 'longMiner',target: pos}}); 
+                        for ( let temp of spawn.memory.safeLongMinerTargets){
+                            var pos=new RoomPosition(temp.x, temp.y, temp.roomName);
+                            var longMiners = _.filter(Game.creeps, (creep) => creep.memory.role == 'longMiner' && targetRoom(creep,pos) && creep.ticksToLive>120);
+                            var longHaulers = _.filter(Game.creeps, (creep) => creep.memory.role == 'longHauler' && targetRoom(creep,pos) && creep.ticksToLive >60);
+                            var longClaim = _.filter(Game.creeps, (creep) => creep.memory.role == 'longClaim' && targetRoom(creep,pos));
+                            var longDefenders = _.filter(Game.creeps, (creep) => creep.memory.role == 'longDefender' && targetRoom(creep,pos));
+                            console.log(Game.rooms[pos.roomName]);
+                            //var invaderCore = Game.rooms[pos.roomName].find(FIND_HOSTILE_STRUCTURES);
+                            /*var hostiles = pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+                            if ((invaderCore || hostiles)&& longDefenders <1){
+                                var newName = 'LongDefender' + Game.time;
+                                spawn.spawnCreep([MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,HEAL,HEAL], newName, 
+                                    {memory: {role: 'longDefender',target: pos}}); 
+                                    break;
                             }
-                            var longHaulers = _.filter(Game.creeps, (creep) => creep.memory.role == 'longHauler' && targetRoom(creep,pos.roomName));
-                            if (longHaulers.length < 1 || (creepTicksLeft(longHaulers[0],75 && longMiners.length <2))){
+                            else */if (longMiners.length < 1 ){
+                                var newName = 'LongMiner' + Game.time;
+                                spawn.spawnCreep([WORK,WORK,WORK,WORK,WORK,WORK,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE], newName, 
+                                    {memory: {role: 'longMiner',target: pos}}); 
+                                    break;
+                            }
+                            else if (longHaulers.length < 2 ){
                                 var newName = 'LongHauler' + Game.time;
                                 spawn.spawnCreep([CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE], newName, 
+                                //spawn.spawnCreep([CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE], newName, 
                                     {memory: {role: 'longHauler',target: pos, home: spawn.pos}}); 
+                                    break;
+                            }
+                            else if (longClaim.length<1 && reserveCheck(Game.rooms[pos.roomName].controller)){
+                                var newName = 'LongClaim' + Game.time;
+                                spawn.spawnCreep([CLAIM,CLAIM,CLAIM,MOVE,MOVE,MOVE], newName, 
+                                    {memory: {role: 'longClaim',target: pos}}); 
+                                    break;
+                            }
+                        }
+                    }
+                
+                
+                    // Long Miner Source Keep Room
+                    if(spawn.memory.sourceKeeperTargets){
+                        for ( let temp of spawn.memory.sourceKeeperTargets){
+                            var pos=new RoomPosition(temp.x, temp.y, temp.roomName);
+                            var longAttackMiners = _.filter(Game.creeps, (creep) => creep.memory.role == 'longAttackMiner' && targetRoom(creep,pos) && creep.ticksToLive > 200);
+                            var longHaulers = _.filter(Game.creeps, (creep) => creep.memory.role == 'longHauler' && targetRoom(creep,pos) && creep.ticksToLive >75);
+                            var longHeal = _.filter(Game.creeps, (creep) => creep.memory.role == 'longHeal' && targetRoom(creep,pos) && creep.ticksToLive > 100);
+                            if (pos.y ==3){
+                                var longHaulerCount=3;
+                            }
+                            else {
+                                var longHaulerCount=2;
+                            }
+                            /*var hostiles = Game.rooms[pos.roomName].find(FIND_HOSTILE_CREEPS);
+                            if (hostiles.length>5){
+                                
+                            }
+                            else*/ if (longAttackMiners.length < 1 ){
+                                var newName = 'LongAttackMiner' + Game.time;
+                                spawn.spawnCreep([TOUGH,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,
+                                    WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,MOVE], newName, 
+                                    {memory: {role: 'longAttackMiner',target: pos}}); 
+                                    break;
+                            }
+                            else if (longHeal.length<1){
+                                var newName = 'LongHeal' + Game.time;
+                                spawn.spawnCreep([MOVE,MOVE,MOVE,MOVE,HEAL,HEAL,HEAL,HEAL,MOVE,HEAL], newName, 
+                                    {memory: {role: 'longHeal',target: pos}}); 
+                                    break;
+                            }
+                            else if (longHaulers.length < longHaulerCount ){
+                                var newName = 'LongHauler' + Game.time;
+                                //spawn.spawnCreep([CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE], newName, 
+                                spawn.spawnCreep([CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE], newName, 
+                                    {memory: {role: 'longHauler',target: pos, home: spawn.pos}});
+                                    break; 
                             }
                         }
                     }
@@ -257,8 +328,23 @@ module.exports = {
                 else if (creep.memory.role == 'longHauler'){
                     roleLongHauler.run(creep, base);
                 }
+                else if (creep.memory.role == 'longClaim'){
+                    roleLongClaim.run(creep, base);
+                }
+                else if (creep.memory.role == 'longAttackMiner'){
+                    roleLongAttackMiner.run(creep, base);
+                }
+                else if (creep.memory.role == 'longHeal'){
+                    roleLongHeal.run(creep, base);
+                }
+                else if (creep.memory.role == 'longDefender'){
+                    roleLongDefender.run(creep, base);
+                }
                 else if (creep.memory.role == 'disassemble'){
                     roleDisassemble.run(creep, base);
+                }
+                else if (creep.memory.role == 'longDisassemble'){
+                    roleLongDisassemble.run(creep, base);
                 }
                 else if (creep.memory.role == 'defenderMelee'){
                     roleDefenderMelee.run(creep, base);
@@ -270,7 +356,7 @@ module.exports = {
                     roleDefenderRanged.run(creep, base);
                 }
                 else if (creep.memory.role == 'claim'){
-                    roleClaim.run(creep);
+                    roleClaim.run(creep, base);
                 }
                 else if (creep.memory.role == 'spawnBuilder'){
                     roleSpawnBuilder.run(creep, base);
@@ -300,7 +386,7 @@ function minerticks(sourceContainers, miners){
     if (sourceContainers.length){
         var creep = sourceContainers[0].pos.lookFor(FIND_CREEPS)[0];
         if (creep){
-            if(creep.ticksToLive < 30){
+            if(creep.ticksToLive < 40){
                 return true;
             }
         }
@@ -316,19 +402,30 @@ function minerticks(sourceContainers, miners){
     return false;
 }
 
-function creepTicksLeft(creep, ticks){
-    if (creep){
-        if (creep.ticksToLive < ticks){
-            return true;
-        }
+function targetRoom(creep, pos){
+    if (creep.memory.target){
+        if (creep.memory.target.x == pos.x && creep.memory.target.y == pos.y && creep.memory.target.roomName == pos.roomName)
+        return true;
     }
     return false;
 }
 
-function targetRoom(creep, string){
-    if (creep.memory.target){
-        if (creep.memory.target.roomName == string)
+function reserveCheck(controller){
+    if (!controller){
         return true;
     }
-    return false;
+    else if (!controller.reservation){
+        return true;
+    }
+    else if (controller.reservation.username == 'Rozinig' && controller.reservation.ticksToEnd <2500){
+        return true;
+    }
+    else if (controller.reservation.username == 'Invader' ){
+        return true;
+    }
+    else {
+        return false;
+    }
+    
+
 }
