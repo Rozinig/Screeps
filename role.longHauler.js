@@ -11,7 +11,7 @@ module.exports = {
             return resource.pos.inRangeTo(creep.pos,6);}});
             //console.log(creep);
             //console.log(sourceCon);
-        if (fruit && !(sour(creep,sourceCon) && creep.room.name== home.roomName ) && creep.store.getFreeCapacity()>0){
+        if (fruit && !(sour(creep,sourceCon) && creep.room.name== home.roomName) && creep.store.getFreeCapacity()>0){
             if (creep.pickup(fruit)==ERR_NOT_IN_RANGE){
                 creep.moveTo(fruit);
             }
@@ -71,7 +71,7 @@ module.exports = {
 
 function sour(creep, sourceCon){
     if (sourceCon){
-        return creep.pos.inRangeTo(sourceCon,3);
+        return creep.pos.inRangeTo(sourceCon,6);
     }
     return false;
 }

@@ -9,6 +9,11 @@ module.exports = {
                 structure.pos.isNearTo(this.sources[1])|| 
                 structure.pos.isNearTo(this.sources[2])|| 
                 structure.pos.isNearTo(this.sources[3]) );}});
+            this.minerals = room.find(FIND_MINERALS);
+            this.mineralExtractors =room.find(FIND_STRUCTURES, { filter: (structure) => {
+                return (structure.structureType == STRUCTURE_EXTRACTOR);}});
+            this.mineralContainers = room.find(FIND_STRUCTURES, { filter: (structure) => {
+                return (structure.structureType == STRUCTURE_CONTAINER) && structure.pos.isNearTo(this.mineralExtractors[0]) ;}});
             if (room.controller){
                 this.sinkContainers = room.find(FIND_STRUCTURES, { filter: (structure) => {
                     return (structure.structureType == STRUCTURE_CONTAINER) && structure.pos.inRangeTo(room.controller.pos,3);}});
@@ -28,9 +33,10 @@ module.exports = {
             } 
             this.energySinks = room.find(FIND_MY_STRUCTURES, {
             filter: (structure) => {
-                return (((structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN||
-                    structure.structureType == STRUCTURE_TOWER) && structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0) || 
-                    (structure.structureType == STRUCTURE_STORAGE && structure.store.getUsedCapacity() <1000));
+                return (((structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN
+                ) && structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0) || 
+                    (structure.structureType == STRUCTURE_STORAGE && structure.store.getUsedCapacity() < 1000)|| 
+                    (structure.structureType == STRUCTURE_TOWER && structure.store.getUsedCapacity(RESOURCE_ENERGY) < 960));
                 }
             });
             this.energySinksSize= [];

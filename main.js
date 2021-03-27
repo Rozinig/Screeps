@@ -22,5 +22,6 @@ module.exports.loop = function () {
     if(Game.cpu.bucket == 10000) {
         Game.cpu.generatePixel();
     }
-    console.log(Game.cpu.bucket);
+    //console.log(Game.cpu.bucket);
+    //console.log(Game.rooms[(new RoomPosition(12,41,'E24N6')).roomName].find(FIND_CREEPS));
 }

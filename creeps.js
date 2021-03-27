@@ -5,6 +5,7 @@ var roleHarvester = require('role.harvester');
 var roleUpgrader = require('role.upgrader');
 var roleBuilder = require('role.builder');
 var roleMiner = require('role.miner');
+var roleMineralMiner = require('role.mineralMiner');
 var roleUpgraderContainer = require('role.upgraderContainer');
 var roleHauler = require('role.hauler');
 var roleHauler2 = require('role.hauler2');
@@ -68,6 +69,7 @@ module.exports = {
             var upgraders = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgrader' && creep.room.name ==room.name);
             var builders = _.filter(Game.creeps, (creep) => creep.memory.role == 'builder' && creep.room.name ==room.name);
             var miners = _.filter(Game.creeps, (creep) => creep.memory.role =='miner' && creep.room.name ==room.name);
+            var mineralMiners = _.filter(Game.creeps, (creep) => creep.memory.role =='mineralMiner' && creep.room.name ==room.name);
             var conUpgraders = _.filter(Game.creeps, (creep) => creep.memory.role == 'upgraderContainer' && creep.room.name ==room.name && creep.ticksToLive > 75);
             var haulers = _.filter(Game.creeps, (creep) => creep.memory.role == 'hauler' && creep.room.name ==room.name && creep.memory.far);
             var hauler2s = _.filter(Game.creeps, (creep) => creep.memory.role == 'hauler' && creep.room.name ==room.name && !creep.memory.far);
@@ -88,7 +90,7 @@ module.exports = {
                 //Count and Spawn Harvesters as necessary
                 if((harvesters.length < harvesterCount)) {
                     var newName = 'Harvester' + Game.time;
-                    if(room.energyCapacityAvailable>400){
+                    if(room.energyAvailable>400){
                         spawn.spawnCreep([WORK,CARRY,CARRY,CARRY,MOVE,MOVE], newName, 
                             {memory: {role: 'harvester'}});
                     }
@@ -98,6 +100,13 @@ module.exports = {
                     }
                         harvesterCount--;
                 }
+                
+                //Miners
+                else if (miners.length <base.sourceContainers.length || (minerticks(base.sourceContainers, miners) && miners.length <(base.sourceContainers+1))){ //there is a conatiner next to a source without a creep on of of role miner and miner.length < source Contrainers.length 
+                    var newName = 'Miner' + Game.time;
+                        spawn.spawnCreep([WORK,WORK,WORK,WORK,WORK,MOVE], newName, 
+                        {memory: {role: 'miner'}}); 
+                } 
                 
                 // Count sites and builders Spawn builders if necessary
                 else if(builders.length < builderCount && (base.buildSites.length > 0 || base.repairSites.length >0) && (harvesters.length >= harvesterCount || haulers.length>0) ) {
@@ -133,14 +142,8 @@ module.exports = {
                         upgraderCount--;
                 }
                 
-                else if (miners.length <base.sourceContainers.length || (minerticks(base.sourceContainers, miners) && miners.length <(base.sourceContainers+1))){ //there is a conatiner next to a source without a creep on of of role miner and miner.length < source Contrainers.length 
-                    var newName = 'Miner' + Game.time;
-                        spawn.spawnCreep([WORK,WORK,WORK,WORK,WORK,MOVE], newName, 
-                        {memory: {role: 'miner'}}); 
-                } 
-                
                 //container upgrader
-                else if((conCap(base.sinkContainers,0,0) && conUpgraders.length < 1) || ( conCap(base.sinkContainers,0,1700) && conUpgraders.length < conUpgraderCount)) {
+                else if((conCap(base.sinkContainers,0,0) && conUpgraders.length < 1) || ( conCap(base.sinkContainers,0,1700) && conUpgraders.length < conUpgraderCount && conUpgraders[conUpgraders.length-1].ticksToLive <1400)) {
                     if (room.energyCapacityAvailable>=1200){
                         var newName = 'conUpgrader' + Game.time;
                         spawn.spawnCreep([WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,CARRY,MOVE,MOVE,MOVE], newName, 
@@ -156,7 +159,7 @@ module.exports = {
                 }
                     
                 // Hauler2
-                else if (miners.length > 1 && hauler2s.length< hauler2Count && (haulers.length <1 || conCap(base.sourceContainers, 1, 1500))) {
+                else if (miners.length > 1 && hauler2s.length< hauler2Count && (haulers.length <1 || (conCap(base.sourceContainers, 1, 1500) && haulers[haulers.length-1].ticksToLive <1400))) {
                     var newName = 'Hauler2' + Game.time;
                     spawn.spawnCreep([CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE], newName, 
                         {memory: {role: 'hauler', far: false}});        
@@ -164,7 +167,7 @@ module.exports = {
                 }
                 
                 // Hauler
-                else if ( miners.length > 0 && haulers.length< haulerCount && (haulers.length <1 || conCap(base.sourceContainers, 0, 1700))) {
+                else if ( miners.length > 0 && haulers.length< haulerCount && (haulers.length <1 || (conCap(base.sourceContainers, 0, 1700) && haulers[haulers.length-1].ticksToLive <1400))) {
                     var newName = 'Hauler' + Game.time;
                     spawn.spawnCreep([CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE], newName, 
                         {memory: {role: 'hauler', far: true}});        
@@ -185,6 +188,13 @@ module.exports = {
                     spawn.spawnCreep([TOUGH,TOUGH,TOUGH,TOUGH,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE], newName, 
                         {memory: {role: 'defenderMelee'}});        
                 }
+                
+                // Mineral Miners
+                /*else if (mineralMiners.length <base.mineralContainers.length || (minerticks(base.mineralContainers, mineralMiners) && miners.length <(base.mineralContainers+1))){ //there is a conatiner next to a source without a creep on of of role miner and miner.length < source Contrainers.length 
+                    var newName = 'MineralMiner' + Game.time;
+                        spawn.spawnCreep([WORK,WORK,WORK,WORK,WORK,MOVE], newName, 
+                        {memory: {role: 'mineralMiner'}}); 
+                } */
                 
                 
                 // Long Harvest
@@ -209,16 +219,13 @@ module.exports = {
                             var longHaulers = _.filter(Game.creeps, (creep) => creep.memory.role == 'longHauler' && targetRoom(creep,pos) && creep.ticksToLive >60);
                             var longClaim = _.filter(Game.creeps, (creep) => creep.memory.role == 'longClaim' && targetRoom(creep,pos));
                             var longDefenders = _.filter(Game.creeps, (creep) => creep.memory.role == 'longDefender' && targetRoom(creep,pos));
-                            console.log(Game.rooms[pos.roomName]);
-                            //var invaderCore = Game.rooms[pos.roomName].find(FIND_HOSTILE_STRUCTURES);
-                            /*var hostiles = pos.findClosestByRange(FIND_HOSTILE_CREEPS);
-                            if ((invaderCore || hostiles)&& longDefenders <1){
+                            if ((hostileBuildingCheck(pos) || hostileCreepCheck(pos,0)) && longDefenders <1){
                                 var newName = 'LongDefender' + Game.time;
                                 spawn.spawnCreep([MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,HEAL,HEAL], newName, 
                                     {memory: {role: 'longDefender',target: pos}}); 
                                     break;
                             }
-                            else */if (longMiners.length < 1 ){
+                            else if (longMiners.length < 1 ){
                                 var newName = 'LongMiner' + Game.time;
                                 spawn.spawnCreep([WORK,WORK,WORK,WORK,WORK,WORK,CARRY,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE], newName, 
                                     {memory: {role: 'longMiner',target: pos}}); 
@@ -254,11 +261,10 @@ module.exports = {
                             else {
                                 var longHaulerCount=2;
                             }
-                            /*var hostiles = Game.rooms[pos.roomName].find(FIND_HOSTILE_CREEPS);
-                            if (hostiles.length>5){
+                            if (hostileBuildingCheck(pos) || hostileCreepCheck(pos,4)){
                                 
                             }
-                            else*/ if (longAttackMiners.length < 1 ){
+                            else if (longAttackMiners.length < 1 ){
                                 var newName = 'LongAttackMiner' + Game.time;
                                 spawn.spawnCreep([TOUGH,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,MOVE,CARRY,
                                     WORK,WORK,WORK,WORK,WORK,WORK,WORK,WORK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,ATTACK,MOVE], newName, 
@@ -312,6 +318,9 @@ module.exports = {
                 }
                 else if (creep.memory.role == 'miner'){
                     roleMiner.run(creep, base);
+                }
+                else if (creep.memory.role == 'mineralMiner'){
+                    roleMineralMiner.run(creep, base);
                 }
                 else if (creep.memory.role == 'hauler2'){
                     roleHauler2.run(creep, base);
@@ -384,7 +393,7 @@ function conCap(Containers, i, cap){
 
 function minerticks(sourceContainers, miners){
     if (sourceContainers.length){
-        var creep = sourceContainers[0].pos.lookFor(FIND_CREEPS)[0];
+        var creep = sourceContainers[0].pos.lookFor(LOOK_CREEPS);
         if (creep){
             if(creep.ticksToLive < 40){
                 return true;
@@ -392,7 +401,7 @@ function minerticks(sourceContainers, miners){
         }
     }
     if (sourceContainers.length>1){
-        var creep = sourceContainers[1].pos.lookFor(FIND_CREEPS)[0];
+        var creep = sourceContainers[1].pos.lookFor(LOOK_CREEPS);
         if (creep){
             if(creep.ticksToLive<100){
                 return true;
@@ -426,6 +435,24 @@ function reserveCheck(controller){
     else {
         return false;
     }
-    
+}
 
+function hostileBuildingCheck(pos){
+    if (pos.roomName in Game.rooms){
+        var buildings = Game.rooms[pos.roomName].find(FIND_HOSTILE_STRUCTURES);
+        if (buildings.length>0){
+            return true;
+        }
+    }
+    return false;
+}
+
+function hostileCreepCheck(pos, count){
+    if (pos.roomName in Game.rooms){
+        var creeps = Game.rooms[pos.roomName].find(FIND_HOSTILE_CREEPS);
+        if (creeps.length>count){
+            return true;
+        }
+    }
+    return false;
 }
